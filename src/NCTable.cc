@@ -223,7 +223,10 @@ void NCTable::addItem( YItem *yitem, bool allAtOnce )
 	      it != item->cellsEnd();
 	      ++it )
 	{
-	    Items[i] = new NCTableCol( NCstring(( *it )->label() ) );
+            if (this->checkable(i))
+              Items[i] = new NCTableTag( yitem, (*it)->checked() );
+            else
+              Items[i] = new NCTableCol( NCstring(( *it )->label() ) );
 	    i++;
 	}
     }
@@ -237,7 +240,10 @@ void NCTable::addItem( YItem *yitem, bool allAtOnce )
 	      it != item->cellsEnd();
 	      ++it )
 	{
-	    Items[i] = new NCTableCol( NCstring(( *it )->label() ) );
+            if (this->checkable(i-1))
+              Items[i] = new NCTableTag( yitem, (*it)->checked() );
+            else
+              Items[i] = new NCTableCol( NCstring(( *it )->label() ) );
 	    i++;
 	}
     }
@@ -367,6 +373,24 @@ void NCTable::selectItem( YItem *yitem, bool selected )
 	tag->SetSelected( selected );
     }
 
+    int i = 0;
+    // Iterate over cells to check columns
+    for ( YTableCellIterator ytit = item->cellsBegin();
+        ytit != item->cellsEnd();
+        ++ytit )
+    {
+        if ((*ytit)->checkable())
+        {
+          NCTableTag *tag =  static_cast<NCTableTag *>( line->GetCol(multiselect ? i+1 : i ) );
+          tag->SetSelected( !(*ytit)->checked() );
+          (*ytit)->setChecked(!(*ytit)->checked());
+          myPad()->ScrlCol(i);
+          yuiMilestone() << item->label() << " column selected " << (multiselect ? i+1 : i) << " column pos " << myPad()->CurPos().C <<  endl;
+
+        }
+        i++;
+    }
+        
     // and redraw
     DrawPad();
 }
@@ -526,10 +550,10 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
 		    if ( notify() && citem != -1 )
 			return NCursesEvent::Activated;
 		}
-		else
-		{
+// 		else
+// 		{
 		    toggleCurrentItem();
-		}
+// 		}
 		break;
 
 	}
@@ -555,7 +579,7 @@ void NCTable::toggleCurrentItem()
 {
     YTableItem *it =  dynamic_cast<YTableItem *>( getCurrentItemPointer() );
     if ( it )
-    {
+    {  
 	selectItem( it, !( it->selected() ) );
     }
 }
