@@ -349,7 +349,7 @@ void NCTable::selectItem( YItem *yitem, bool selected )
     const NCTableLine *current_line = myPad()->GetLine( myPad()->CurPos().L );
     YUI_CHECK_PTR( current_line );
 
-    if ( !multiselect )
+    if ( !multiselect && !checkable(myPad()->CurPos().C))
     {
 	if ( !selected && ( line == current_line ) )
 	{
@@ -362,7 +362,7 @@ void NCTable::selectItem( YItem *yitem, bool selected )
 	    YTable::selectItem( item, selected );
 	}
     }
-    else if (myPad()->CurPos().C == 0)
+    else if (multiselect && myPad()->CurPos().C == 0)
     {
 	setCurrentItem( line->getIndex() );
 	YTable::selectItem( item, selected );
@@ -373,22 +373,22 @@ void NCTable::selectItem( YItem *yitem, bool selected )
 	tag->SetSelected( selected );
     }
 
-    yuiMilestone() << " current line is: " << current_line->getIndex() << " selected is: " << line->getIndex() << " column pos " << myPad()->CurPos().C << endl;
-    int i = 0;
+    yuiMilestone() << "(A) current line is: " << current_line->getIndex() << " selected is: " << line->getIndex() << " column pos " << myPad()->CurPos().C << endl;
+    int i = (multiselect?1:0);
     // Iterate over cells to check columns
     for ( YTableCellIterator ytit = item->cellsBegin();
-        myPad()->CurPos().C != 0 && ytit != item->cellsEnd();
+        /*(myPad()->CurPos().C != 0 || (myPad()->CurPos().C == 0 && !multiselect)) &&*/ ytit != item->cellsEnd();
         ++ytit )
     {
         if ((*ytit)->checkable())
         {
           if ( myPad()->CurPos().C == i)
           {
-            NCTableTag *tag =  static_cast<NCTableTag *>( line->GetCol(multiselect ? i+1 : i ) );
+            NCTableTag *tag =  static_cast<NCTableTag *>( line->GetCol(/*multiselect ? i+1 :*/ i ) );
             tag->SetSelected( !(*ytit)->checked() );
             (*ytit)->setChecked(!(*ytit)->checked());
             //myPad()->ScrlCol(i);
-            yuiMilestone() << item->label() << " column selected " << (multiselect ? i+1 : i) << " column pos " << myPad()->CurPos().C <<  endl;
+            yuiMilestone() << item->label() << "(B) column selected " << (/*multiselect ? i+1 :*/ i) << " column pos " << myPad()->CurPos().C <<  endl;
           }
         }
         i++;
@@ -418,6 +418,8 @@ void NCTable::selectCurrentItem()
 
 void NCTable::deselectAllItems()
 {
+    yuiMilestone() << "(AAAA) column selected " <<  endl;
+
     setCurrentItem( -1 );
     YTable::deselectAllItems();
     DrawPad();
@@ -507,25 +509,24 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
     {
       case KEY_RIGHT:
       {
-        yuiMilestone() << "<KEY_RIGHT> pressed " << " col. " << myPad()->CurPos().C <<  endl;
+        yuiMilestone() << "<KEY_RIGHT> pressed on col. " << myPad()->CurPos().C <<  "/" << myPad()->Cols()<<  endl;
         const NCTableLine *cline = myPad()->GetLine( myPad()->CurPos().L );
-
         if ( cline )
         {
           YTableItem *item = cline->origItem(); 
           YUI_CHECK_PTR( item ); 
-          
-          int currCol = myPad()->CurPos().C + (multiselect ?  2 : 1);
-          for (unsigned col= myPad()->CurPos().C+1; col < myPad()->Cols(); ++col)
+          int currCol = myPad()->CurPos().C;
+          for (unsigned col= currCol+1; col < myPad()->Cols(); ++col)
           {
-            if (this->checkable(col))
+            if (this->checkable(col-(multiselect?1:0)))
             {
-              for (unsigned i=0; i< col - myPad()->CurPos().C; ++i)
+              yuiMilestone() << item->label() << " scroll right of " << col - currCol <<  endl;
+              for (unsigned i=0; i< col - currCol; ++i)
                 myPad()->ScrlRight();
               break;
             }
           }
-          yuiMilestone() << item->label() << " new column selected " << myPad()->CurPos().C <<  " internal is " << currCol <<  endl;          
+          yuiMilestone() << item->label() << " new column selected " << myPad()->CurPos().C <<  "/" << myPad()->Cols() <<  endl;          
         }
       }
         break;
@@ -540,9 +541,24 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
           YTableItem *item = cline->origItem(); 
           YUI_CHECK_PTR( item ); 
           
-          int currCol = myPad()->CurPos().C - 1;
-          // max colnum managed inside setpos 
-          myPad()->ScrlLeft();
+          int currCol = myPad()->CurPos().C;
+          for (int col= currCol-1; col >= 0; --col)
+          {
+            if (col == 0)
+            {
+              if (multiselect || (!multiselect && this->checkable(col)))
+                for (int i=0; i< currCol - col; ++i)
+                  myPad()->ScrlLeft();
+            }
+            else if (this->checkable(col-(multiselect?1:0)))
+            {
+              yuiMilestone() << item->label() << " scroll left of " << currCol - col <<  endl;
+              for (int i=0; i< currCol - col; ++i)
+                myPad()->ScrlLeft();
+              break;
+            }
+          }
+          
           yuiMilestone() << item->label() << " new column selected " << myPad()->CurPos().C <<  " internal is " << currCol <<  endl;          
         }
       }
@@ -588,16 +604,20 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
 
             case KEY_SPACE:
             case KEY_RETURN:
-              yuiMilestone() << (key == KEY_SPACE ? "<SPACE> " : "<RETURN> ") << "pressed col. " << myPad()->CurPos().C <<  endl;
+              yuiMilestone() << (key == KEY_SPACE ? "<SPACE> " : "<RETURN> ") << "pressed(1) col. " << myPad()->CurPos().C << " checkable "<< (this->checkable(myPad()->CurPos().C) ? "yes " : "no") <<  endl;
+
                 if ( !multiselect )
                 {
-                    if ( notify() && citem != -1 )
-                        return NCursesEvent::Activated;
+                      if (this->checkable(myPad()->CurPos().C))
+                        toggleCurrentItem();
+                      if ( notify() && citem != -1 )
+                          return NCursesEvent::Activated;
                 }
-//              else
-//              {
-                    toggleCurrentItem();
-//              }
+                else
+                {
+                      toggleCurrentItem();
+                }
+                yuiMilestone() << (key == KEY_SPACE ? "<SPACE> " : "<RETURN> ") << "pressed(2) col. " << myPad()->CurPos().C << " checkable "<< (this->checkable(myPad()->CurPos().C) ? "yes " : "no") <<  endl;
                 break;
             default:
               handleInput( key );

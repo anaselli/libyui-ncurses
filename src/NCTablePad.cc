@@ -306,6 +306,7 @@ int NCTablePad::setpos( const wpos & newpos )
         Items[citem.L]->DrawAt( *this, wrect( wpos( citem.L, 0 ), wsze( 1, width() ) ),
 			    ItemStyle, true );
       }
+#if 0
       else if (citem.C != opos)
       {
         // remove line selection
@@ -327,6 +328,7 @@ int NCTablePad::setpos( const wpos & newpos )
 //         Items[citem.L]->DrawAt( *this, wrect( wpos( citem.L, citem.C ), wsze( 1, 1 ) ),
 //                                ItemStyle, true );
       }
+#endif
     }
     // else: item drawing requested via directDraw
 
