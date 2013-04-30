@@ -362,7 +362,7 @@ void NCTable::selectItem( YItem *yitem, bool selected )
 	    YTable::selectItem( item, selected );
 	}
     }
-    else
+    else if (myPad()->CurPos().C == 0)
     {
 	setCurrentItem( line->getIndex() );
 	YTable::selectItem( item, selected );
@@ -373,20 +373,23 @@ void NCTable::selectItem( YItem *yitem, bool selected )
 	tag->SetSelected( selected );
     }
 
+    yuiMilestone() << " current line is: " << current_line->getIndex() << " selected is: " << line->getIndex() << " column pos " << myPad()->CurPos().C << endl;
     int i = 0;
     // Iterate over cells to check columns
     for ( YTableCellIterator ytit = item->cellsBegin();
-        ytit != item->cellsEnd();
+        myPad()->CurPos().C != 0 && ytit != item->cellsEnd();
         ++ytit )
     {
         if ((*ytit)->checkable())
         {
-          NCTableTag *tag =  static_cast<NCTableTag *>( line->GetCol(multiselect ? i+1 : i ) );
-          tag->SetSelected( !(*ytit)->checked() );
-          (*ytit)->setChecked(!(*ytit)->checked());
-          myPad()->ScrlCol(i);
-          yuiMilestone() << item->label() << " column selected " << (multiselect ? i+1 : i) << " column pos " << myPad()->CurPos().C <<  endl;
-
+          if ( myPad()->CurPos().C == i)
+          {
+            NCTableTag *tag =  static_cast<NCTableTag *>( line->GetCol(multiselect ? i+1 : i ) );
+            tag->SetSelected( !(*ytit)->checked() );
+            (*ytit)->setChecked(!(*ytit)->checked());
+            //myPad()->ScrlCol(i);
+            yuiMilestone() << item->label() << " column selected " << (multiselect ? i+1 : i) << " column pos " << myPad()->CurPos().C <<  endl;
+          }
         }
         i++;
     }
@@ -500,6 +503,107 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
     NCursesEvent ret;
     int citem  = getCurrentItem();
 
+    switch (key)
+    {
+      case KEY_RIGHT:
+      {
+        yuiMilestone() << "<KEY_RIGHT> pressed " << " col. " << myPad()->CurPos().C <<  endl;
+        const NCTableLine *cline = myPad()->GetLine( myPad()->CurPos().L );
+
+        if ( cline )
+        {
+          YTableItem *item = cline->origItem(); 
+          YUI_CHECK_PTR( item ); 
+          
+          int currCol = myPad()->CurPos().C + (multiselect ?  2 : 1);
+          for (unsigned col= myPad()->CurPos().C+1; col < myPad()->Cols(); ++col)
+          {
+            if (this->checkable(col))
+            {
+              for (unsigned i=0; i< col - myPad()->CurPos().C; ++i)
+                myPad()->ScrlRight();
+              break;
+            }
+          }
+          yuiMilestone() << item->label() << " new column selected " << myPad()->CurPos().C <<  " internal is " << currCol <<  endl;          
+        }
+      }
+        break;
+      case KEY_LEFT:
+      {
+        yuiMilestone() << "<KEY_LEFT> pressed " << " col. " << myPad()->CurPos().C <<  endl;
+       
+        const NCTableLine *cline = myPad()->GetLine( myPad()->CurPos().L );
+
+        if ( cline )
+        {
+          YTableItem *item = cline->origItem(); 
+          YUI_CHECK_PTR( item ); 
+          
+          int currCol = myPad()->CurPos().C - 1;
+          // max colnum managed inside setpos 
+          myPad()->ScrlLeft();
+          yuiMilestone() << item->label() << " new column selected " << myPad()->CurPos().C <<  " internal is " << currCol <<  endl;          
+        }
+      }
+        break;
+        case CTRL( 'o' ):
+                {
+                    if ( ! keepSorting() )
+                    {
+                        // get the column
+                        wpos at( ScreenPos() + wpos( win->height() / 2, 1 ) );
+
+                        YItemCollection ic;
+                        ic.reserve( _header.size() );
+                        unsigned int i = 0;
+
+                        for ( std::vector<NCstring>::const_iterator it = _header.begin();
+                              it != _header.end() ; it++, i++ )
+                        {
+                            // strip the align mark
+                            std::string col = ( *it ).Str();
+                            col.erase( 0, 1 );
+
+                            YMenuItem *item = new YMenuItem( col ) ;
+                            //need to set index explicitly, MenuItem inherits from TreeItem
+                            //and these don't have indexes set
+                            item->setIndex( i );
+                            ic.push_back( item );
+                        }
+
+                        NCPopupMenu *dialog = new NCPopupMenu( at, ic.begin(), ic.end() );
+
+                        int column = dialog->post();
+
+                        if ( column != -1 )
+                            myPad()->setOrder( column, true );  //enable sorting in reverse order
+
+                        //remove the popup
+                        YDialog::deleteTopmostDialog();
+
+                        return NCursesEvent::none;
+                    }
+                }
+
+            case KEY_SPACE:
+            case KEY_RETURN:
+              yuiMilestone() << (key == KEY_SPACE ? "<SPACE> " : "<RETURN> ") << "pressed col. " << myPad()->CurPos().C <<  endl;
+                if ( !multiselect )
+                {
+                    if ( notify() && citem != -1 )
+                        return NCursesEvent::Activated;
+                }
+//              else
+//              {
+                    toggleCurrentItem();
+//              }
+                break;
+            default:
+              handleInput( key );
+              break;
+    }
+#if 0    
     if ( ! handleInput( key ) )
     {
 	switch ( key )
@@ -544,7 +648,9 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
 		}
 
 	    case KEY_SPACE:
+              yuiMilestone() << "<SPACE> pressed col. " << myPad()->CurPos().C <<  endl;
 	    case KEY_RETURN:
+              yuiMilestone() << "<RETURN> pressed col. " << myPad()->CurPos().C <<  endl;
 		if ( !multiselect )
 		{
 		    if ( notify() && citem != -1 )
@@ -555,10 +661,17 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
 		    toggleCurrentItem();
 // 		}
 		break;
+            case KEY_STAB:
+              yuiMilestone() << "<TAB> pressed col. " << myPad()->CurPos().C <<  endl;
 
+              break;
+            default:
+             yuiMilestone() << "Key pressed " << key << " col. " << myPad()->CurPos().C <<  endl;
+
+              break;
 	}
     }
-
+#endif
 
     if (  citem != getCurrentItem() )
     {
@@ -571,6 +684,7 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
 
     return ret;
 }
+
 
 /**
  * Toggle item from selected -> deselected and vice versa

@@ -93,7 +93,7 @@ public:
     void stripHotkeys() { myPad()->stripHotkeys(); }
 
     void setSortStrategy( NCTableSortStrategyBase * newStrategy ) { myPad()->setSortStrategy( newStrategy ); }
-
+    
 protected:
 
     /**

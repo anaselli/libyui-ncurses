@@ -169,7 +169,7 @@ void NCTablePad::wRecoded()
 
 wpos NCTablePad::CurPos() const
 {
-    citem.C = srect.Pos.C;
+//     citem.C = srect.Pos.C;
     return citem;
 }
 
@@ -278,7 +278,16 @@ int NCTablePad::setpos( const wpos & newpos )
     if (( unsigned )citem.L >= Lines() )
 	citem.L = Lines() - 1;
 
-    srect.Pos = wpos( citem.L - ( drect.Sze.H - 1 ) / 2, newpos.C ).between( 0, maxspos );
+    if ( citem.L == oitem )
+    {
+      citem.C = newpos.C < 0 ? 0 : newpos.C;
+      if (( unsigned )citem.C >= Cols() )
+          citem.C = Cols() - 1;
+    }
+    else 
+      citem.C = 0;
+
+    srect.Pos = wpos( citem.L - ( drect.Sze.H - 1 ) / 2, citem.C ).between( 0, maxspos );
 
     if ( dirty )
     {
@@ -287,22 +296,46 @@ int NCTablePad::setpos( const wpos & newpos )
 
     if ( ! pageing() )
     {
-    // adjust only
-    if ( citem.L != oitem )
-    {
+      // adjust only
+      if ( citem.L != oitem )
+      {
 	Items[oitem]->DrawAt( *this, wrect( wpos( oitem, 0 ), wsze( 1, width() ) ),
 			      ItemStyle, false );
-    }
+    
 
-    Items[citem.L]->DrawAt( *this, wrect( wpos( citem.L, 0 ), wsze( 1, width() ) ),
-
+        Items[citem.L]->DrawAt( *this, wrect( wpos( citem.L, 0 ), wsze( 1, width() ) ),
 			    ItemStyle, true );
+      }
+      else if (citem.C != opos)
+      {
+        // remove line selection
+        Items[citem.L]->DrawAt( *this, wrect( wpos( citem.L, 0 ), wsze( 1, width() ) ),
+                                ItemStyle, false );
+        
+        // anaselli: try to select the column NOTE it does not work
+        NCTableCol * cc = Items[citem.L]->GetCol( opos );
+        if (cc)
+        {          
+          cc->DrawAt(*this, wrect(wpos(0, opos), wsze(0,ItemStyle.ColWidth(opos))), ItemStyle, NCTableLine::S_DISABELED,opos);
+        }
+        cc = Items[citem.L]->GetCol(citem.C);
+        if (cc)
+        {
+          cc->DrawAt(*this,wrect(wpos(0, citem.C), wsze(0,ItemStyle.ColWidth(citem.C))), ItemStyle, NCTableLine::S_HEADLINE, citem.C);
+        }
+
+//         Items[citem.L]->DrawAt( *this, wrect( wpos( citem.L, citem.C ), wsze( 1, 1 ) ),
+//                                ItemStyle, true );
+      }
     }
     // else: item drawing requested via directDraw
 
     if ( srect.Pos.C != opos )
 	SendHead();
-
+    //anaselli :TODO remove
+yuiMilestone() << " YYYYYYY new column selected " << newpos.C << " maxspos (" << maxspos.L << ","<< maxspos.C << ")" << std::endl;
+yuiMilestone() << " YYYYYYY citem selected (" << citem.L << ","<< citem.C << ")" << std::endl;
+yuiMilestone() << " YYYYYYY srect selected (" << srect.Pos.L << ","<< srect.Pos.C << ") - cols " << Cols() << std::endl;
     return update();
 }
 
