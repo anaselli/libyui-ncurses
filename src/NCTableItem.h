@@ -71,7 +71,7 @@ protected:
     mutable STATE vstate;
     virtual void DrawItems( NCursesWindow & w, const wrect at,
 			    NCTableStyle & tableStyle,
-			    bool active ) const;
+			    bool active, int selectedCol=-1 ) const;
 
 public:
 
@@ -128,11 +128,16 @@ public:
     virtual unsigned Hotspot( unsigned & at ) const { at = 0; return 0; }
 
     virtual void UpdateFormat( NCTableStyle & TableStyle );
-
+    
+    // new drawAt selectedCol=-1 ignore selection
+    virtual void DrawAt( NCursesWindow & w, const wrect at,
+                         NCTableStyle & tableStyle,
+                         bool active, int selectedCol ) const;
+    //DrawAt left for compatibility, calls the previous one                     
     virtual void DrawAt( NCursesWindow & w, const wrect at,
 			 NCTableStyle & tableStyle,
 			 bool active ) const;
-
+                         
     void stripHotkeys();
 };
 

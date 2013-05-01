@@ -198,8 +198,15 @@ void NCTableLine::UpdateFormat( NCTableStyle & tableStyle )
 
 
 void NCTableLine::DrawAt( NCursesWindow & w, const wrect at,
+                          NCTableStyle & tableStyle,
+                          bool active) const
+{
+  DrawAt(w, at, tableStyle, active, -1);
+}
+
+void NCTableLine::DrawAt( NCursesWindow & w, const wrect at,
 			  NCTableStyle & tableStyle,
-			  bool active ) const
+			  bool active, int selectedCol ) const
 {
     vstate = S_HIDDEN;
 
@@ -219,13 +226,13 @@ void NCTableLine::DrawAt( NCursesWindow & w, const wrect at,
 	w.clrtoeol();
     }
 
-    DrawItems( w, at, tableStyle, active );
+    DrawItems( w, at, tableStyle, active, selectedCol);
 }
 
 
 void NCTableLine::DrawItems( NCursesWindow & w, const wrect at,
 			     NCTableStyle & tableStyle,
-			     bool active ) const
+			     bool active, int selectedCol ) const
 {
     if ( !( at.Sze > wsze( 0 ) ) )
 	return;
@@ -275,6 +282,9 @@ void NCTableLine::DrawItems( NCursesWindow & w, const wrect at,
 	// draw item
 	if ( Items[c] )
 	{
+          if ((unsigned)selectedCol == c && vstate != S_DISABELED)
+            Items[c]->DrawAt( w, cRect, tableStyle, (active ? S_NORMAL : S_ACTIVE), c );
+          else
 	    Items[c]->DrawAt( w, cRect, tableStyle, vstate, c );
 	}
     }

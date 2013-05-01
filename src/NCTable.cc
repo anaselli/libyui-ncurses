@@ -507,7 +507,7 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
 
     switch (key)
     {
-      case KEY_RIGHT:
+      case CTRL('n')://KEY_RIGHT:
       {
         yuiMilestone() << "<KEY_RIGHT> pressed on col. " << myPad()->CurPos().C <<  "/" << myPad()->Cols()<<  endl;
         const NCTableLine *cline = myPad()->GetLine( myPad()->CurPos().L );
@@ -530,7 +530,7 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
         }
       }
         break;
-      case KEY_LEFT:
+      case CTRL('p')://KEY_LEFT:
       {
         yuiMilestone() << "<KEY_LEFT> pressed " << " col. " << myPad()->CurPos().C <<  endl;
        
@@ -608,10 +608,15 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
 
                 if ( !multiselect )
                 {
-                      if (this->checkable(myPad()->CurPos().C))
-                        toggleCurrentItem();
+                  if (this->checkable(myPad()->CurPos().C))
+                  {  
+                      toggleCurrentItem();
                       if ( notify() && citem != -1 )
-                          return NCursesEvent::Activated;
+                              return NCursesEvent::ValueChanged;
+                  }
+
+                  if ( notify() && citem != -1 )
+                      return NCursesEvent::Activated;
                 }
                 else
                 {

@@ -306,29 +306,11 @@ int NCTablePad::setpos( const wpos & newpos )
         Items[citem.L]->DrawAt( *this, wrect( wpos( citem.L, 0 ), wsze( 1, width() ) ),
 			    ItemStyle, true );
       }
-#if 0
       else if (citem.C != opos)
       {
-        // remove line selection
         Items[citem.L]->DrawAt( *this, wrect( wpos( citem.L, 0 ), wsze( 1, width() ) ),
-                                ItemStyle, false );
-        
-        // anaselli: try to select the column NOTE it does not work
-        NCTableCol * cc = Items[citem.L]->GetCol( opos );
-        if (cc)
-        {          
-          cc->DrawAt(*this, wrect(wpos(0, opos), wsze(0,ItemStyle.ColWidth(opos))), ItemStyle, NCTableLine::S_DISABELED,opos);
-        }
-        cc = Items[citem.L]->GetCol(citem.C);
-        if (cc)
-        {
-          cc->DrawAt(*this,wrect(wpos(0, citem.C), wsze(0,ItemStyle.ColWidth(citem.C))), ItemStyle, NCTableLine::S_HEADLINE, citem.C);
-        }
-
-//         Items[citem.L]->DrawAt( *this, wrect( wpos( citem.L, citem.C ), wsze( 1, 1 ) ),
-//                                ItemStyle, true );
+                                ItemStyle, true,  citem.C);
       }
-#endif
     }
     // else: item drawing requested via directDraw
 
