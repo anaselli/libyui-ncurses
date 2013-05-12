@@ -229,6 +229,12 @@ void NCTableLine::DrawAt( NCursesWindow & w, const wrect at,
     DrawItems( w, at, tableStyle, active, selectedCol);
 }
 
+void NCTableLine::DrawItems( NCursesWindow & w, const wrect at,
+                             NCTableStyle & tableStyle,
+                             bool active ) const
+{
+  DrawItems(w, at, tableStyle, active, -1);
+}
 
 void NCTableLine::DrawItems( NCursesWindow & w, const wrect at,
 			     NCTableStyle & tableStyle,

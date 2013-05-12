@@ -167,6 +167,7 @@ private:
     NCursesPad	Headpad;
     bool	dirtyHead;
     bool	dirtyFormat;
+    bool        selectColumns;
 
     NCTableStyle	 ItemStyle;
     NCTableLine		 Headline;
@@ -212,6 +213,9 @@ public:
     }
 
     void setOrder( int column, bool do_reverse = false );
+    
+    void setColumnSelection(bool mode=true) {selectColumns=mode;}
+    bool columnSelectioActive() {return selectColumns;}
 
 public:
 

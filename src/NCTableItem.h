@@ -70,8 +70,11 @@ protected:
 
     mutable STATE vstate;
     virtual void DrawItems( NCursesWindow & w, const wrect at,
+                            NCTableStyle & tableStyle,
+                            bool active, int selectedCol ) const;
+    virtual void DrawItems( NCursesWindow & w, const wrect at,
 			    NCTableStyle & tableStyle,
-			    bool active, int selectedCol=-1 ) const;
+			    bool active ) const;
 
 public:
 

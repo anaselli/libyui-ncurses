@@ -35,6 +35,7 @@ NCTablePad::NCTablePad( int lines, int cols, const NCWidget & p )
 	, Headpad( 1, 1 )
 	, dirtyHead( false )
 	, dirtyFormat( false )
+        , selectColumns( false )
 	, ItemStyle( p )
 	, Headline( 0 )
 	, Items( 0 )
@@ -169,7 +170,8 @@ void NCTablePad::wRecoded()
 
 wpos NCTablePad::CurPos() const
 {
-//     citem.C = srect.Pos.C;
+    if (!selectColumns)
+       citem.C = srect.Pos.C;
     return citem;
 }
 
@@ -219,6 +221,11 @@ int NCTablePad::DoRedraw()
     {
 	Items[l]->DrawAt( *this, wrect( wpos( l, 0 ), lSze ),
 			  ItemStyle, (( unsigned )citem.L == l ) );
+      if (selectColumns && l == (unsigned)citem.L)
+      {
+       Items[l]->DrawAt( *this, wrect( wpos( l, 0 ), lSze ),
+                          ItemStyle, true, citem.C );
+      }
     }
     }
     // else: item drawing requested via directDraw
@@ -243,7 +250,13 @@ int NCTablePad::DoRedraw()
 void NCTablePad::directDraw( NCursesWindow & w, const wrect at, unsigned lineno )
 {
     if ( lineno < Lines() )
-        Items[lineno]->DrawAt( w, at, ItemStyle, ((unsigned)citem.L == lineno) );
+    {
+      Items[lineno]->DrawAt( w, at, ItemStyle, ((unsigned)citem.L == lineno) );
+      if (selectColumns && lineno == (unsigned)citem.L)
+      {
+        Items[lineno]->DrawAt( w, at, ItemStyle, true, citem.C );
+      }
+    }
     else
         yuiWarning() << "Illegal Lineno " << lineno << " (" << Lines() << ")" << std::endl;
 }
@@ -261,8 +274,8 @@ int NCTablePad::setpos( const wpos & newpos )
     }
 
     yuiDebug() << newpos << " : l " << Lines() << " : cl " << citem.L
-
-    << " : d " << dirty << " : df " << dirtyFormat << std::endl;
+               << ": cc " << citem.C << " : d " << dirty << " : df " 
+               << dirtyFormat << std::endl;
 
     if ( dirtyFormat )
 	UpdateFormat();
@@ -278,16 +291,14 @@ int NCTablePad::setpos( const wpos & newpos )
     if (( unsigned )citem.L >= Lines() )
 	citem.L = Lines() - 1;
 
-    if ( citem.L == oitem )
+    if (selectColumns) // && citem.L == oitem )
     {
       citem.C = newpos.C < 0 ? 0 : newpos.C;
       if (( unsigned )citem.C >= Cols() )
           citem.C = Cols() - 1;
     }
-    else 
-      citem.C = 0;
 
-    srect.Pos = wpos( citem.L - ( drect.Sze.H - 1 ) / 2, citem.C ).between( 0, maxspos );
+    srect.Pos = wpos( citem.L - ( drect.Sze.H - 1 ) / 2, newpos.C ).between( 0, maxspos );
 
     if ( dirty )
     {
@@ -300,17 +311,16 @@ int NCTablePad::setpos( const wpos & newpos )
       if ( citem.L != oitem )
       {
 	Items[oitem]->DrawAt( *this, wrect( wpos( oitem, 0 ), wsze( 1, width() ) ),
-			      ItemStyle, false );
-    
-
-        Items[citem.L]->DrawAt( *this, wrect( wpos( citem.L, 0 ), wsze( 1, width() ) ),
-			    ItemStyle, true );
+			      ItemStyle, false );   
       }
-      else if (citem.C != opos)
+      if (selectColumns) // && citem.C != opos)
       {
         Items[citem.L]->DrawAt( *this, wrect( wpos( citem.L, 0 ), wsze( 1, width() ) ),
-                                ItemStyle, true,  citem.C);
+                                ItemStyle, true,  ( (unsigned)citem.C >= Cols()? Cols() : citem.C));
       }
+      else 
+        Items[citem.L]->DrawAt( *this, wrect( wpos( citem.L, 0 ), wsze( 1, width() ) ),
+                                ItemStyle, true );
     }
     // else: item drawing requested via directDraw
 

@@ -224,7 +224,10 @@ void NCTable::addItem( YItem *yitem, bool allAtOnce )
 	      ++it )
 	{
             if (this->checkable(i))
+            {
               Items[i] = new NCTableTag( yitem, (*it)->checked() );
+              myPad()->setColumnSelection();
+            }
             else
               Items[i] = new NCTableCol( NCstring(( *it )->label() ) );
 	    i++;
@@ -241,7 +244,10 @@ void NCTable::addItem( YItem *yitem, bool allAtOnce )
 	      ++it )
 	{
             if (this->checkable(i-1))
+            {
               Items[i] = new NCTableTag( yitem, (*it)->checked() );
+              myPad()->setColumnSelection();
+            }
             else
               Items[i] = new NCTableCol( NCstring(( *it )->label() ) );
 	    i++;
