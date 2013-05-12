@@ -25,7 +25,7 @@ if (GIT_VERSION)
     exec_program(
                  "${GIT_EXECUTABLE}"
                  ${CMAKE_CURRENT_SOURCE_DIR}
-                 ARGS "describe"
+                 ARGS "describe --tags"
 	         OUTPUT_VARIABLE GIT_VERSION )
 
     string( REGEX MATCH "-g[0-9|a-f]+$" VERSION_SHA1 ${GIT_VERSION} )
