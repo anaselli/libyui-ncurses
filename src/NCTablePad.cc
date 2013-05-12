@@ -298,7 +298,15 @@ int NCTablePad::setpos( const wpos & newpos )
           citem.C = Cols() - 1;
     }
 
-    srect.Pos = wpos( citem.L - ( drect.Sze.H - 1 ) / 2, newpos.C ).between( 0, maxspos );
+    if (selectColumns && (maxspos.C > (int)Cols()))
+    {
+      int col_pos = ((maxspos.C + Cols()) * citem.C) / Cols();
+      srect.Pos = wpos( citem.L - ( drect.Sze.H - 1 ) / 2, col_pos ).between( 0, maxspos );
+    }
+    else
+    {
+      srect.Pos = wpos( citem.L - ( drect.Sze.H - 1 ) / 2, newpos.C ).between( 0, maxspos );
+    }
 
     if ( dirty )
     {
