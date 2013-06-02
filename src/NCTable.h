@@ -36,7 +36,7 @@ class NCTable : public YTable, public NCPadWidget
 {
 public:
 
-    NCTable( YWidget * parent, YTableHeader *tableHeader, bool multiSelection = false );
+    NCTable( YWidget * parent, YTableHeader *tableHeader, YTableMode mode = YTableMode::YTableSingleLineSelection );
 
     virtual ~NCTable();
 
@@ -103,8 +103,6 @@ protected:
 	{ return dynamic_cast<NCTablePad*>( NCPadWidget::myPad() ); }
 
     bool	  biglist;
-    bool 	  multiselect;
-
 
 protected:
 

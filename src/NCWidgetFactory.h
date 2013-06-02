@@ -97,7 +97,8 @@ public:
     virtual NCComboBox *        createComboBox          ( YWidget * parent, const std::string & label, bool editable     = false );
     virtual NCSelectionBox *    createSelectionBox      ( YWidget * parent, const std::string & label );
     virtual NCTree *            createTree              ( YWidget * parent, const std::string & label, bool multiselection = false, bool recursiveselection = false );
-    virtual NCTable *           createTable             ( YWidget * parent, YTableHeader * tableHeader, bool multiSelection = false );
+    virtual NCTable *           createTable             ( YWidget * parent, YTableHeader * tableHeader, bool multiSelection );
+    virtual NCTable *           createTable             ( YWidget * parent, YTableHeader * tableHeader, YTableMode mode = YTableMode::YTableSingleLineSelection );
     virtual NCProgressBar *     createProgressBar       ( YWidget * parent, const std::string & label, int maxValue = 100 );
     virtual NCRichText *        createRichText          ( YWidget * parent, const std::string & text = std::string(), bool plainTextMode = false );
 

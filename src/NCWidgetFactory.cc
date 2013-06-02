@@ -169,12 +169,20 @@ NCWidgetFactory::createTree( YWidget * parent, const std::string & label, bool m
 NCTable *
 NCWidgetFactory::createTable( YWidget * parent, YTableHeader * tableHeader, bool multiSelection )
 {
-    NCTable *table = new NCTable( parent, tableHeader, multiSelection );
+    NCTable *table = new NCTable( parent, tableHeader, (multiSelection ? YTableMode::YTableMultiSelection : YTableMode::YTableSingleLineSelection ) );
     YUI_CHECK_NEW( table );
 
     return table;
 }
 
+NCTable *
+NCWidgetFactory::createTable( YWidget * parent, YTableHeader * tableHeader, YTableMode mode )
+{
+    NCTable *table = new NCTable( parent, tableHeader, mode );
+    YUI_CHECK_NEW( table );
+
+    return table;
+}
 
 
 NCProgressBar *

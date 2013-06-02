@@ -45,18 +45,20 @@ using std::endl;
  * provided to allow NCTable to specify the line number itself (getCurrentItem).
  * 
  */
-NCTable::NCTable( YWidget * parent, YTableHeader *tableHeader, bool multiSelection )
-    : YTable( parent, tableHeader, multiSelection )
+NCTable::NCTable( YWidget * parent, YTableHeader *tableHeader, YTableMode mode )
+    : YTable( parent, tableHeader, mode )
     , NCPadWidget( parent )
     , biglist( false )
-    , multiselect( multiSelection )
 {
     yuiDebug() << std::endl;
 
     InitPad();
+
+    yuiMilestone() << " Slection mode " << mode <<  std::endl;
+
     // !!! head is UTF8 encoded, thus should be std::vector<NCstring>
-    if ( !multiselect )
-    {
+    if ( mode == YTableSingleLineSelection )
+    {  
 	_header.assign( tableHeader->columns(), NCstring( "" ) );
 	for ( int col = 0; col < tableHeader->columns(); col++ )
 	{
@@ -72,15 +74,22 @@ NCTable::NCTable( YWidget * parent, YTableHeader *tableHeader, bool multiSelecti
     else
     {
 	_header.assign( tableHeader->columns()+1, NCstring( "" ) );
-
-	for ( int col = 1; col <= tableHeader->columns(); col++ )
+        int columNumber = columns();
+        int col_offset  = 0;
+        if ( mode == YTableCheckBoxOnFirstColumn || mode == YTableMultiSelection)
+        {
+          col_offset   = 1;
+          columNumber += 1;
+        }
+        
+	for ( int col = col_offset; col < columNumber; col++ )
 	{
-	    if ( hasColumn( col-1 ) )
+	    if ( hasColumn( col-col_offset ) )
 	    {
 		// set alignment first
-		setAlignment( col, alignment( col-1 ) );
+		setAlignment( col, alignment( col-col_offset ) );
 		// and then append header
-		_header[ col ] +=  NCstring( tableHeader->header( col-1 ) ) ;
+		_header[ col ] +=  NCstring( tableHeader->header( col-col_offset ) ) ;
 	    }
 	}
     }
@@ -216,44 +225,73 @@ void NCTable::addItem( YItem *yitem)
 // true, it is up to the caller to redraw the table.
 void NCTable::addItem( YItem *yitem, bool allAtOnce )
 {
-
     YTableItem *item = dynamic_cast<YTableItem *>( yitem );
     YUI_CHECK_PTR( item );
     YTable::addItem( item );
     unsigned int itemCount;
+    YTableMode mode = selectionMode();
 
-    if ( !multiselect )
-	itemCount =  item->cellCount();
+    if ( mode == YTableSingleLineSelection )
+	itemCount = columns();
     else
-	itemCount = item->cellCount()+1;
+	itemCount = columns()+1;
 
     std::vector<NCTableCol*> Items( itemCount );
     unsigned int i = 0;
 
-    if ( !multiselect )
+    if ( mode == YTableSingleLineSelection )
     {
 	// Iterate over cells to create columns
 	for ( YTableCellIterator it = item->cellsBegin();
 	      it != item->cellsEnd();
 	      ++it )
 	{
+          if (i > 0 && (signed)i >= columns() )
+          {
+             yuiWarning() << "Item contains too many columns, current is " << i 
+                        << " but only " << columns() << " columns are configured" << std::endl;
+             i++;           
+          }
+          else
+          {
 	    Items[i] = new NCTableCol( NCstring(( *it )->label() ) );
 	    i++;
+          }
 	}
     }
     else
     {
+       int columOffset = 0;
+       if ( mode == YTableCheckBoxOnFirstColumn || mode == YTableMultiSelection) 
+       {
 	// Create the tag first
 	Items[0] = new NCTableTag( yitem, yitem->selected() );
 	i++;
+          columOffset = 1;
+       }
 	// and then iterate over cells
 	for ( YTableCellIterator it = item->cellsBegin();
 	      it != item->cellsEnd();
 	      ++it )
 	{
+          if (i > 0 && (i-columOffset) >= columns() )
+          {
+             yuiWarning() << "Item contains too many columns, current is " << i-columOffset 
+                        << " but only " << columns() << " columns are configured" << std::endl;
+             i++;           
+          }
+          else
+          {
+            yuiDebug() << "current column is " << i-columOffset << "/" << columns() << " (" << (*it)->label() << ")" << std::endl;
 	    Items[i] = new NCTableCol( NCstring(( *it )->label() ) );
 	    i++;
+          }
 	}
+	if ( mode == YTableCheckBoxOnLastColumn )
+        {
+          // Create the tag at last column
+          Items[columns()] = new NCTableTag( yitem, yitem->selected() );          
+        }
     }
 
     //Insert @idx
@@ -357,7 +395,8 @@ void NCTable::selectItem( YItem *yitem, bool selected )
     const NCTableLine *current_line = myPad()->GetLine( myPad()->CurPos().L );
     YUI_CHECK_PTR( current_line );
 
-    if ( !multiselect )
+    YTableMode mode = selectionMode();
+    if ( mode == YTableSingleLineSelection )
     {
 	if ( !selected && ( line == current_line ) )
 	{
@@ -372,12 +411,16 @@ void NCTable::selectItem( YItem *yitem, bool selected )
     }
     else
     {
+      int checkable_column = 0;
+      if ( mode == YTableCheckBoxOnLastColumn)
+        checkable_column = columns();
+
 	setCurrentItem( line->getIndex() );
 	YTable::selectItem( item, selected );
 
 	yuiMilestone() << item->label() << " is selected: " << (selected?"yes":"no") <<  endl;
 
-	NCTableTag *tag =  static_cast<NCTableTag *>( line->GetCol( 0 ) );
+	NCTableTag *tag =  static_cast<NCTableTag *>( line->GetCol( checkable_column ) );
 	tag->SetSelected( selected );
     }
 
@@ -489,7 +532,8 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
 {
     NCursesEvent ret;
     int citem  = getCurrentItem();
-
+    YTableMode mode = selectionMode();
+    
     if ( ! handleInput( key ) )
     {
 	switch ( key )
@@ -535,7 +579,7 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
 
 	    case KEY_SPACE:
 	    case KEY_RETURN:
-		if ( !multiselect )
+		if ( mode == YTableSingleLineSelection )
 		{
 		    if ( notify() && citem != -1 )
 			return NCursesEvent::Activated;
@@ -543,7 +587,7 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
 		else
 		{
 		    toggleCurrentItem();
-                    if ( notify() && immediateMode() )
+                    if ( notify() || immediateMode() )
                     {
                         return NCursesEvent::ValueChanged;
                     }
@@ -559,7 +603,7 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
 	if ( notify() && immediateMode() )
 	    ret = NCursesEvent::SelectionChanged;
 
-	if ( !multiselect )
+	if ( mode == YTableSingleLineSelection )
 	    selectCurrentItem();
     }
 
