@@ -274,7 +274,7 @@ void NCTable::addItem( YItem *yitem, bool allAtOnce )
 	      it != item->cellsEnd();
 	      ++it )
 	{
-          if (i > 0 && (i-columOffset) >= columns() )
+          if (i > 0 && (signed)(i-columOffset) >= columns() )
           {
              yuiWarning() << "Item contains too many columns, current is " << i-columOffset 
                         << " but only " << columns() << " columns are configured" << std::endl;
