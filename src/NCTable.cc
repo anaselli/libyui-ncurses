@@ -448,8 +448,22 @@ void NCTable::selectCurrentItem()
 
 void NCTable::deselectAllItems()
 {
-    setCurrentItem( -1 );
-    YTable::deselectAllItems();
+    YTableMode mode = selectionMode();
+    if ( mode == YTableSingleLineSelection )
+    {
+        setCurrentItem( -1 );
+        YTable::deselectAllItems();
+    }
+    else
+    {
+        YItemCollection itemCollection = YTable::selectedItems();
+        for ( YItemConstIterator it = itemCollection.begin();
+              it != itemCollection.end(); ++it )
+        {
+            selectItem( *it, false );   // YTable::selectItem(item,false)
+        }
+    }
+
     DrawPad();
 }
 
@@ -533,7 +547,8 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
     NCursesEvent ret;
     int citem  = getCurrentItem();
     YTableMode mode = selectionMode();
-    
+    bool sendEvent = false;
+
     if ( ! handleInput( key ) )
     {
 	switch ( key )
@@ -577,8 +592,9 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
 		    }
 		}
 
-	    case KEY_SPACE:
 	    case KEY_RETURN:
+                sendEvent = true;
+	    case KEY_SPACE:
 		if ( mode == YTableSingleLineSelection )
 		{
 		    if ( notify() && citem != -1 )
@@ -587,7 +603,8 @@ NCursesEvent NCTable::wHandleInput( wint_t key )
 		else
 		{
 		    toggleCurrentItem();
-                    if ( notify() || immediateMode() )
+                    // send ValueChanged on Return (like done for NCTree multiSelection)
+                    if ( notify() && sendEvent )
                     {
                         return NCursesEvent::ValueChanged;
                     }
