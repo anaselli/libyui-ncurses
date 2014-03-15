@@ -1,8 +1,14 @@
 -------------------------------------------------------------------
-Wed Feb 19 15:48:08 CET 2014 - anaselli@linux.it
+Wed Mar 15 18:48:08 CET 2014 - anaselli@linux.it
 
 - Implementation of optional widget YTimeField
 - Implementation of optional widget YDateField
+- 2.46.4
+
+-------------------------------------------------------------------
+Fri Feb 28 12:35:39 CET 2014 - gs@suse.de
+
+- fixed segfault in tree widget (bnc #866145)
 - 2.46.3
 
 -------------------------------------------------------------------
