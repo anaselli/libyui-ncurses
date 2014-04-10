@@ -5,6 +5,13 @@ Wed Mar 15 18:48:08 CET 2014 - anaselli@linux.it
 - Implementation of optional widget YDateField
 - new class NCInputText to share code between NCTimeField, NCDateField
   and NCInputField
+- 2.46.5
+
+-------------------------------------------------------------------
+Tue Apr  8 12:42:03 CEST 2014 - gs@suse.de
+
+- Display menu (function keys) correctly in non UTF-8 environment
+  (bnc #865597)
 - 2.46.4
 
 -------------------------------------------------------------------
