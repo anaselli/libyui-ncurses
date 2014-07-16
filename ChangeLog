@@ -1,5 +1,5 @@
 -------------------------------------------------------------------
-Thu Apr 24 16:23:40 CEST 2014 - anaselli@linux.it
+Wed Jul 16 22:56:37 CEST 2014 - anaselli@linux.it
 
 - NCTimeField input validity check
 - NCDateField input validity check
@@ -7,6 +7,14 @@ Thu Apr 24 16:23:40 CEST 2014 - anaselli@linux.it
 - Implementation of optional widget YDateField
 - new class NCInputText to share code between NCTimeField, NCDateField
   and NCInputField
+- 2.46.6
+
+-------------------------------------------------------------------
+Wed Jul  9 12:10:11 CEST 2014 - gs@suse.de
+
+- Table sorting: always sort as strings, don't try interpreting
+  as numbers (bnc #885653)
+>>>>>>> upstream/master
 - 2.46.5
 
 -------------------------------------------------------------------
