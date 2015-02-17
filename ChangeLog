@@ -1,5 +1,5 @@
 -------------------------------------------------------------------
-Wed Jul 16 22:56:37 CEST 2014 - anaselli@linux.it
+unmerged fixings - anaselli@linux.it
 
 - NCTimeField input validity check
 - NCDateField input validity check
@@ -7,6 +7,34 @@ Wed Jul 16 22:56:37 CEST 2014 - anaselli@linux.it
 - Implementation of optional widget YDateField
 - new class NCInputText to share code between NCTimeField, NCDateField
   and NCInputField
+
+-------------------------------------------------------------------
+Tue Feb  3 13:57:26 CET 2015 - gs@suse.de
+
+- don't use internal ncurses (_nc_) functions (bnc #915945)
+- 2.46.9
+
+-------------------------------------------------------------------
+Tue Jan 20 16:09:58 UTC 2015 - mvidner@suse.com
+
+- Fixed building with cmake 3.1 (PREFIX in spec, boo#911875).
+- 2.46.8
+
+-------------------------------------------------------------------
+Fri Nov  7 14:13:38 UTC 2014 - anaselli@linux.it
+
+- RichText hyperlinks: return as strings, like Qt and GTK do.
+  (gh#libyui/libyui-ncurses#30)
+- 2.46.7
+
+-------------------------------------------------------------------
+Thu Jul 10 12:09:39 CEST 2014 - gs@suse.de
+
+- Improve table sorting: interpret numbers correctly (related to
+  previous fix for bnc #885653),
+  Multiselection table: don't set focus to last line (partial
+  bug-fix for bnc #885278) 
+>>>>>>> upstream/master
 - 2.46.6
 
 -------------------------------------------------------------------
