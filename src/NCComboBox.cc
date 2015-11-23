@@ -453,6 +453,7 @@ NCursesEvent NCComboBox::wHandleInput( wint_t key )
 
 	    break;
 
+	case KEY_SLEFT:
 	case KEY_HOME:
 
 	    if ( curpos && ( mayedit || fldstart ) )
@@ -467,6 +468,7 @@ NCursesEvent NCComboBox::wHandleInput( wint_t key )
 
 	    break;
 
+	case KEY_SRIGHT:
 	case KEY_END:
 
 	    if ( curpos < buffer.length() && ( mayedit || fldstart + fldlength <= buffer.length() ) )
@@ -586,7 +588,8 @@ int NCComboBox::listPopup()
 
     if ( !deflist.empty() )
     {
-	wpos	    at( ScreenPos() + wpos( win->height(), -1 ) );
+	// add fix heigth of 2 (dont't use win->height() because win might be invalid, bnc#931154)
+	wpos	    at( ScreenPos() + wpos( 2, -1 ) );
 	NCPopupList * dialog = new NCPopupList( at, "", deflist, index );
 	YUI_CHECK_NEW( dialog );
 	idx = dialog->post();
